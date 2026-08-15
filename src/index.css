@@ -130,7 +130,8 @@ body {
 .brand-title-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .brand-name {
@@ -150,6 +151,17 @@ body {
   border-radius: var(--radius-full);
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.badge-soroban {
+  background: rgba(2, 132, 199, 0.2);
+  color: #7dd3fc;
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
 }
 
 .brand-subtitle {
@@ -200,8 +212,15 @@ body {
   padding: 0.45rem 0.85rem;
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.825rem;
   color: var(--text-main);
+}
+
+.wallet-provider-tag {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #38bdf8;
 }
 
 .btn-disconnect {
@@ -266,7 +285,7 @@ body {
 /* Hero Section                                                               */
 /* -------------------------------------------------------------------------- */
 .hero-banner {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   text-align: center;
   padding: 1.5rem 1rem 0;
 }
@@ -291,12 +310,12 @@ body {
 }
 
 .hero-title {
-  font-size: 2.25rem;
+  font-size: 2.15rem;
   font-weight: 800;
   line-height: 1.25;
   letter-spacing: -0.03em;
   margin-bottom: 0.75rem;
-  max-width: 800px;
+  max-width: 860px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -308,7 +327,7 @@ body {
 .hero-lead {
   font-size: 1.05rem;
   color: var(--text-secondary);
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto 2rem auto;
   line-height: 1.6;
 }
@@ -358,6 +377,191 @@ body {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Crowdfunding Progress Bar (Real-Time Soroban Sync)                          */
+/* -------------------------------------------------------------------------- */
+.crowdfunding-card {
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.08) 0%, var(--bg-surface) 100%);
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.crowdfund-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.crowdfund-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.live-sync-pill {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.contract-tag {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-surface-elevated);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.crowdfund-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.crowdfund-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-contract-explorer {
+  background: rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(2, 132, 199, 0.4);
+  color: #7dd3fc;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-contract-explorer:hover {
+  background: rgba(2, 132, 199, 0.25);
+}
+
+.crowdfund-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.progress-section {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.progress-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.stat-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8, #10b981);
+  border-radius: var(--radius-full);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.progress-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.6rem;
+  font-size: 0.75rem;
+}
+
+.progress-percent-badge {
+  font-weight: 800;
+  color: #38bdf8;
+  font-size: 0.85rem;
+}
+
+.sync-note {
+  color: var(--text-muted);
+}
+
+.contract-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.85rem;
+}
+
+.c-metric-item {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.c-metric-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.c-metric-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* -------------------------------------------------------------------------- */
 /* App Layout Grid                                                            */
 /* -------------------------------------------------------------------------- */
 .app-grid {
@@ -395,6 +599,8 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .section-title-wrapper {
@@ -747,6 +953,83 @@ body {
 /* -------------------------------------------------------------------------- */
 /* Donation Form                                                              */
 /* -------------------------------------------------------------------------- */
+.mode-toggle-group {
+  display: flex;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 0.2rem;
+  border-radius: var(--radius-md);
+  gap: 0.25rem;
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-active {
+  background: var(--primary-600);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.contract-target-box {
+  background: rgba(2, 132, 199, 0.08);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.contract-target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contract-target-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.badge-contract-active {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.2);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+}
+
+.contract-address-display {
+  font-size: 0.775rem;
+  color: #cbd5e1;
+  word-break: break-all;
+}
+
+.contract-method-note {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.contract-method-note code {
+  color: #7dd3fc;
+  font-family: var(--font-mono);
+}
+
 .donation-form {
   display: flex;
   flex-direction: column;
@@ -949,6 +1232,96 @@ body {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Receipts Explorer                                                          */
+/* -------------------------------------------------------------------------- */
+.badge-receipt-count {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.empty-receipts-box {
+  background: var(--bg-surface-elevated);
+  border: 1px dashed var(--border-subtle);
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+}
+
+.receipts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.receipt-item {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-id-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.receipt-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.receipt-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-beneficiary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.775rem;
+}
+
+.receipt-label {
+  color: var(--text-muted);
+}
+
+.receipt-beneficiary {
+  color: #cbd5e1;
+}
+
+.receipt-amount {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Activity Log                                                               */
 /* -------------------------------------------------------------------------- */
 .btn-text-action {
@@ -1083,7 +1456,176 @@ body {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Modal Feedback                                                             */
+/* Multi-Wallet Modal                                                         */
+/* -------------------------------------------------------------------------- */
+.wallet-modal-content {
+  max-width: 480px;
+}
+
+.wallet-modal-header {
+  padding: 1.5rem 1.5rem 0.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-icon-badge {
+  background: rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  padding: 0.65rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 0.75rem;
+}
+
+.modal-error-banner {
+  margin: 0 1.5rem 1rem;
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fecdd3;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 1.5rem 1.25rem;
+}
+
+.wallet-option-item {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wallet-option-item:hover {
+  background: var(--bg-surface-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.wallet-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wallet-item-emoji {
+  font-size: 1.5rem;
+}
+
+.wallet-item-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.wallet-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wallet-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.wallet-status-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-full);
+}
+
+.badge-installed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.badge-web {
+  background: rgba(2, 132, 199, 0.15);
+  color: #7dd3fc;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.badge-uninstalled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.wallet-description {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-wallet-connect {
+  background: var(--primary-600);
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-wallet-connect:hover:not(:disabled) {
+  background: var(--primary-500);
+}
+
+.btn-wallet-install {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-wallet-install:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.wallet-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Modal Step-by-Step Tracker                                                 */
 /* -------------------------------------------------------------------------- */
 .modal-overlay {
   position: fixed;
@@ -1155,6 +1697,92 @@ body {
   color: var(--text-secondary);
   line-height: 1.45;
   margin-bottom: 1.25rem;
+}
+
+.badge-contract-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.tx-steps-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+.tx-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+}
+
+.step-bullet {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.step-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-text strong {
+  font-size: 0.825rem;
+  color: #e2e8f0;
+}
+
+.step-text span {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.step-active {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.15);
+}
+
+.step-active .step-bullet {
+  background: #0284c7;
+  color: #fff;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.step-done {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.step-done .step-bullet {
+  background: #10b981;
+  color: #fff;
+}
+
+.step-pending {
+  opacity: 0.5;
 }
 
 .modal-amount-badge {

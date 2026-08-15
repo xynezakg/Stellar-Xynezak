@@ -1,26 +1,54 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from './hooks/useWallet';
+import { useContractSync } from './hooks/useContractSync';
 import { Navbar } from './components/Navbar';
+import { WalletModal } from './components/WalletModal';
 import { BalanceCard } from './components/BalanceCard';
+import { CrowdfundingProgress } from './components/CrowdfundingProgress';
 import { ReliefPresets } from './components/ReliefPresets';
 import { DonationForm } from './components/DonationForm';
+import { ReceiptsExplorer } from './components/ReceiptsExplorer';
 import { TransactionModal } from './components/TransactionModal';
 import { ActivityLog } from './components/ActivityLog';
 import { PresetBeneficiary, ReliefTransaction, TransactionResult } from './types/stellar';
 import { buildPaymentTransaction, submitSignedTransaction } from './services/stellar';
-import { signTxWithFreighter } from './services/freighter';
-import { HeartHandshake, ShieldCheck, Zap, Globe2, Sparkles } from 'lucide-react';
+import { signTxWithSelectedWallet } from './services/wallets';
+import { invokeContractDonate, TxStepStatus } from './services/soroban';
+import { HeartHandshake, ShieldCheck, Zap, Sparkles, Cpu } from 'lucide-react';
 
 const LOCAL_STORAGE_TXS_KEY = 'aidpact_relief_transactions';
 
 export function App() {
-  const { wallet, connect, disconnect, refreshBalance, fundAccount, isFunding } = useWallet();
+  const {
+    wallet,
+    connect,
+    disconnect,
+    refreshBalance,
+    fundAccount,
+    isFunding,
+    isWalletModalOpen,
+    openWalletModal,
+    closeWalletModal,
+  } = useWallet();
+
+  const {
+    campaign,
+    receipts,
+    totalReceipts,
+    progressPercent,
+    lastSyncTime,
+    refreshContract,
+  } = useContractSync(0);
+
   const [selectedPreset, setSelectedPreset] = useState<PresetBeneficiary | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txStepStatus, setTxStepStatus] = useState<TxStepStatus>('IDLE');
+  const [txStatusMessage, setTxStatusMessage] = useState<string>('');
   const [txResult, setTxResult] = useState<TransactionResult | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastSentAmount, setLastSentAmount] = useState<string | undefined>(undefined);
   const [lastRecipient, setLastRecipient] = useState<string | undefined>(undefined);
+
   const [transactions, setTransactions] = useState<ReliefTransaction[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_TXS_KEY);
@@ -30,7 +58,6 @@ export function App() {
     }
   });
 
-  // Save transactions to local storage
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_TXS_KEY, JSON.stringify(transactions));
@@ -48,33 +75,113 @@ export function App() {
     localStorage.removeItem(LOCAL_STORAGE_TXS_KEY);
   };
 
-  const handleSendPayment = async (
+  // Smart Contract Donation Flow (Level 2 Core Invocation)
+  const handleSendContractDonation = async (
+    amount: string,
+    memo: string,
+    recipientName?: string
+  ) => {
+    if (!wallet.address || !wallet.walletType) {
+      openWalletModal();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setIsModalOpen(true);
+    setLastSentAmount(amount);
+    setLastRecipient(recipientName || 'Typhoon Relief Escrow Contract');
+
+    try {
+      const { hash, ledger } = await invokeContractDonate(
+        0, // Campaign ID 0
+        wallet.address,
+        amount,
+        wallet.walletType,
+        (status, message) => {
+          setTxStepStatus(status);
+          if (message) setTxStatusMessage(message);
+        }
+      );
+
+      const res: TransactionResult = {
+        success: true,
+        hash,
+        ledger,
+        isContractCall: true,
+      };
+
+      setTxResult(res);
+      setTxStepStatus('CONFIRMED');
+
+      // Record in activity log
+      const newTx: ReliefTransaction = {
+        id: hash,
+        hash,
+        from: wallet.address,
+        to: 'AidPact Smart Contract',
+        recipientName: recipientName || 'Soroban Relief Escrow',
+        amount,
+        memo: memo || undefined,
+        timestamp: Date.now(),
+        status: 'SUCCESS',
+        isContractCall: true,
+        contractMethod: 'donate',
+        ledger,
+      };
+
+      setTransactions((prev) => [newTx, ...prev]);
+
+      // Refresh contract state and wallet balance
+      setTimeout(() => {
+        refreshContract();
+        refreshBalance();
+      }, 1500);
+    } catch (err: any) {
+      console.error('Smart contract donation error:', err);
+      setTxStepStatus('FAILED');
+      setTxResult({
+        success: false,
+        error: err.message || 'Soroban smart contract execution failed.',
+        isContractCall: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Direct XLM Payment Flow (Level 1 Fallback)
+  const handleSendDirectPayment = async (
     to: string,
     amount: string,
     memo: string,
     recipientName?: string
   ) => {
-    if (!wallet.address) return;
+    if (!wallet.address || !wallet.walletType) {
+      openWalletModal();
+      return;
+    }
 
     setIsSubmitting(true);
+    setIsModalOpen(true);
+    setTxStepStatus('BUILDING');
+    setTxStatusMessage('Building payment transaction...');
     setLastSentAmount(amount);
     setLastRecipient(recipientName ? `${recipientName} (${to})` : to);
 
     try {
-      // Step 1: Build payment transaction XDR
       const unsignedXdr = await buildPaymentTransaction(wallet.address, to, amount, memo);
 
-      // Step 2: Request Freighter to sign
-      const signedXdr = await signTxWithFreighter(unsignedXdr);
+      setTxStepStatus('SIGNING');
+      setTxStatusMessage(`Awaiting signature from ${wallet.walletName || 'wallet'}...`);
+      const signedXdr = await signTxWithSelectedWallet(wallet.walletType, unsignedXdr);
 
-      // Step 3: Submit signed XDR to Stellar Horizon Testnet
+      setTxStepStatus('SUBMITTING');
+      setTxStatusMessage('Submitting transaction to Horizon Testnet...');
       const result = await submitSignedTransaction(signedXdr);
 
       setTxResult(result);
-      setIsModalOpen(true);
-
       if (result.success && result.hash) {
-        // Record in activity log
+        setTxStepStatus('CONFIRMED');
         const newTx: ReliefTransaction = {
           id: result.hash,
           hash: result.hash,
@@ -89,58 +196,74 @@ export function App() {
         };
         setTransactions((prev) => [newTx, ...prev]);
 
-        // Refresh balance after successful payment
         setTimeout(() => {
           refreshBalance();
         }, 1500);
+      } else {
+        setTxStepStatus('FAILED');
       }
     } catch (err: any) {
-      console.error('Payment flow error:', err);
+      console.error('Payment error:', err);
+      setTxStepStatus('FAILED');
       setTxResult({
         success: false,
         error: err.message || 'Payment execution failed.',
       });
-      setIsModalOpen(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Calculate total donated from activity log
-  const totalDonated = transactions.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+  const totalDonated = transactions.reduce(
+    (acc, curr) => acc + (parseFloat(curr.amount) || 0),
+    0
+  );
 
   return (
     <div className="app-container">
-      <Navbar wallet={wallet} onConnect={connect} onDisconnect={disconnect} />
+      <Navbar
+        wallet={wallet}
+        onOpenWalletModal={openWalletModal}
+        onDisconnect={disconnect}
+      />
 
       <main className="main-content">
-        {/* Hero Emergency Banner */}
+        {/* Hero Banner */}
         <section className="hero-banner">
           <div className="hero-badge-row">
             <span className="hero-badge">
               <Sparkles size={14} className="text-emerald" />
-              Stellar RiseIn Hackathon — Level 1 Submission
+              Stellar RiseIn Hackathon — Level 2 (Multi-Wallet & Soroban v22)
             </span>
           </div>
 
           <h1 className="hero-title">
-            Empowering Transparent Calamity Relief with <span className="hero-highlight">Stellar Lumens</span>
+            Decentralized Calamity Relief Escrow on <span className="hero-highlight">Soroban Smart Contracts</span>
           </h1>
 
           <p className="hero-lead">
-            Direct, verifiable peer-to-peer disaster relief donations on the <strong>Stellar Testnet</strong>.
-            Zero intermediary cuts, ~5 second finality, and transparent public receipts.
+            Cryptographically locked emergency aid funds, multi-wallet authentication, and verified distribution receipts on <strong>Stellar Testnet</strong>.
           </p>
 
           {/* Quick Metrics Bar */}
           <div className="metrics-grid">
             <div className="metric-card">
               <div className="metric-icon-wrapper">
+                <Cpu size={20} className="text-primary" />
+              </div>
+              <div className="metric-info">
+                <span className="metric-value">Soroban v22</span>
+                <span className="metric-label">Rust Wasm Escrow</span>
+              </div>
+            </div>
+
+            <div className="metric-card">
+              <div className="metric-icon-wrapper">
                 <Zap size={20} className="text-amber" />
               </div>
               <div className="metric-info">
-                <span className="metric-value">~5 Seconds</span>
-                <span className="metric-label">Settlement Speed</span>
+                <span className="metric-value">5 Wallets</span>
+                <span className="metric-label">Freighter, xBull, Albedo, Hana, Lobstr</span>
               </div>
             </div>
 
@@ -150,7 +273,7 @@ export function App() {
               </div>
               <div className="metric-info">
                 <span className="metric-value">$0.00001</span>
-                <span className="metric-label">Average Network Fee</span>
+                <span className="metric-label">Gas Cost per Invocation</span>
               </div>
             </div>
 
@@ -160,25 +283,24 @@ export function App() {
               </div>
               <div className="metric-info">
                 <span className="metric-value">{totalDonated.toFixed(2)} XLM</span>
-                <span className="metric-label">Total Donated in Session</span>
-              </div>
-            </div>
-
-            <div className="metric-card">
-              <div className="metric-icon-wrapper">
-                <Globe2 size={20} className="text-primary" />
-              </div>
-              <div className="metric-info">
-                <span className="metric-value">Stellar Testnet</span>
-                <span className="metric-label">Horizon Blockchain</span>
+                <span className="metric-label">Session Contributions</span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Core Application Grid */}
+        {/* Live On-Chain Crowdfunding & State Sync Progress */}
+        <CrowdfundingProgress
+          campaign={campaign}
+          progressPercent={progressPercent}
+          totalReceipts={totalReceipts}
+          lastSyncTime={lastSyncTime}
+          onRefresh={refreshContract}
+        />
+
+        {/* Core Grid */}
         <div className="app-grid">
-          {/* Left Column: Wallet Balance & Preset Relief Causes */}
+          {/* Left Column */}
           <div className="app-col-left">
             <BalanceCard
               wallet={wallet}
@@ -191,14 +313,20 @@ export function App() {
               onSelect={handleSelectPreset}
               selectedId={selectedPreset ? selectedPreset.id : null}
             />
+
+            <ReceiptsExplorer
+              receipts={receipts}
+              totalReceipts={totalReceipts}
+            />
           </div>
 
-          {/* Right Column: Donation Form & Activity Log */}
+          {/* Right Column */}
           <div className="app-col-right">
             <DonationForm
               wallet={wallet}
               selectedPreset={selectedPreset}
-              onSendPayment={handleSendPayment}
+              onSendContractDonation={handleSendContractDonation}
+              onSendDirectPayment={handleSendDirectPayment}
               isSubmitting={isSubmitting}
             />
 
@@ -219,44 +347,66 @@ export function App() {
               <span className="footer-brand-name">AidPact</span>
             </div>
             <p className="footer-tagline">
-              Transparent Calamity Relief & Verified Last-Mile Distribution on Stellar.
+              Multi-Wallet & Soroban Smart Contract Calamity Relief on Stellar Testnet.
             </p>
           </div>
 
           <div className="footer-checklist-col">
-            <h4 className="footer-heading">Level 1 Requirements Verified:</h4>
+            <h4 className="footer-heading">Level 2 Requirements Verified:</h4>
             <div className="checklist-grid">
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Freighter Wallet Connect / Disconnect</span>
+                <span>Multi-Wallet Kit (Freighter, xBull, Albedo, Hana, Lobstr)</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Live XLM Horizon Balance Fetching</span>
+                <span>Soroban Smart Contract Deployed on Testnet</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Stellar Testnet XLM Payment Flow</span>
+                <span>Contract Called From Frontend (Read & Write)</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Stellar Expert Explorer Feedback</span>
+                <span>Real-Time State & Event Sync (Live Progress Bar)</span>
+              </div>
+              <div className="check-item">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>3+ Error Types Handled with Actionable Guidance</span>
+              </div>
+              <div className="check-item">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>Live Transaction Status Tracking (Simulate → Sign → Submit)</span>
               </div>
             </div>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>Stellar RiseIn Bootcamp · Built on Stellar Testnet</span>
+          <span>Stellar RiseIn Bootcamp · Built with Soroban SDK & Stellar RPC</span>
         </div>
       </footer>
 
-      {/* Transaction Result / Feedback Modal */}
+      {/* Multi-Wallet Selection Modal */}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onSelectWallet={connect}
+        onClose={closeWalletModal}
+        isConnecting={wallet.isConnecting}
+        error={wallet.error}
+      />
+
+      {/* Transaction Feedback & Status Modal */}
       <TransactionModal
         isOpen={isModalOpen}
         result={txResult}
+        stepStatus={txStepStatus}
+        statusMessage={txStatusMessage}
         amountSent={lastSentAmount}
         recipientSent={lastRecipient}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setTxStepStatus('IDLE');
+        }}
       />
     </div>
   );
