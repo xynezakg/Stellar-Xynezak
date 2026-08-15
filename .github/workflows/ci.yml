@@ -37,17 +37,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install Stellar CLI
-        run: |
-          cargo install --locked stellar-cli --features opt
-
       - name: Build Soroban Contract WASM
         run: |
-          stellar contract build --manifest-path contracts/aid_pact/Cargo.toml
+          cargo build --manifest-path contracts/aid_pact/Cargo.toml --target wasm32-unknown-unknown --release
 
       - name: Verify WASM Binary Output
         run: |
-          ls -la contracts/aid_pact/target/wasm32v1-none/release/aid_pact.wasm || ls -la contracts/aid_pact/target/wasm32-unknown-unknown/release/*.wasm
+          ls -la contracts/aid_pact/target/wasm32-unknown-unknown/release/*.wasm
 
   # Job 2: Frontend Unit Tests & Production Build
   frontend-build:
