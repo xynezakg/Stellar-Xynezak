@@ -1,10 +1,11 @@
 # 🌊 AidPact — Transparent Disaster Relief Crowdfunding & Verified Last-Mile Distribution
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-aidpact.vercel.app-0ea5e9?style=for-the-badge&logo=vercel)](https://aidpact.vercel.app/)
 [![Stellar Testnet](https://img.shields.io/badge/Stellar-Testnet-0284c7?style=flat&logo=stellar)](https://stellar.org)
 [![Soroban Smart Contract](https://img.shields.io/badge/Soroban-v22.0-8b5cf6?style=flat)](https://soroban.stellar.org)
 [![CI/CD Pipeline](https://github.com/xynezakg/Stellar-Xynezak/actions/workflows/ci.yml/badge.svg)](https://github.com/xynezakg/Stellar-Xynezak/actions)
 [![Tests Passing](https://img.shields.io/badge/Tests-10%2F10%20Passed-10b981?style=flat)](https://github.com/xynezakg/Stellar-Xynezak)
-[![Multi--Wallet](https://img.shields.io/badge/Wallets-Freighter%20%7C%20Albedo%20%7C%20xBull%20%7C%20Hana%20%7C%20Lobstr-0ea5e9?style=flat)](https://github.com/xynezakg/Stellar-Xynezak)
+[![Multi--Wallet](https://img.shields.io/badge/Wallets-Freighter%20%7C%20Albedo%20%7C%20xBull%20%7C%20Hana%20%7C%20Lobstr-38bdf8?style=flat)](https://github.com/xynezakg/Stellar-Xynezak)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **AidPact** is a production-ready, decentralized humanitarian relief crowdfunding and verified last-mile disbursement platform built on the **Stellar Testnet** and powered by **Soroban Smart Contracts**.
@@ -15,17 +16,48 @@ This repository fulfills all requirements for **Level 3 (Black Belt — Advanced
 
 ---
 
-## 🏆 Level 3 Submission Details & Verifiable On-Chain Artifacts
+## 🌐 Live Application & Contract Artifacts
 
-| Item | Value / Stellar Explorer Link |
+| Item | Value / Verifiable Link |
 |---|---|
-| **Deployed Contract ID** | [`CAC6F5R3PIN24BNDAGMT3JXF5C34CJ3URFPHTG5WREXOJMA45ZXZAO3E`](https://stellar.expert/explorer/testnet/contract/CAC6F5R3PIN24BNDAGMT3JXF5C34CJ3URFPHTG5WREXOJMA45ZXZAO3E) |
-| **Wasm Bytecode Hash** | `407be7bda02c20b691c70cb1b1f9eae3985b4352dd890ff3cf1f29b8d8b9d2ef` |
-| **Contract Deploy Tx Hash** | [`375f2a72354fa8926e902e1c0fb90fdd2f9a10d0a38609f8709a1244769c5f14`](https://stellar.expert/explorer/testnet/tx/375f2a72354fa8926e902e1c0fb90fdd2f9a10d0a38609f8709a1244769c5f14) |
-| **Contract Interaction Tx Hash (`create_campaign`)** | [`c985c1d95a0538f1a11e55f0eb4bb1c214cd8dcc2af2974bbc1b919ad4440b8c`](https://stellar.expert/explorer/testnet/tx/c985c1d95a0538f1a11e55f0eb4bb1c214cd8dcc2af2974bbc1b919ad4440b8c) |
-| **Native SAC Token Address** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
-| **Soroban RPC URL** | `https://soroban-testnet.stellar.org` |
-| **Horizon RPC URL** | `https://horizon-testnet.stellar.org` |
+| **🚀 Live Production dApp** | [**https://aidpact.vercel.app/**](https://aidpact.vercel.app/) |
+| **📦 Deployed Contract ID** | [`CAC6F5R3PIN24BNDAGMT3JXF5C34CJ3URFPHTG5WREXOJMA45ZXZAO3E`](https://stellar.expert/explorer/testnet/contract/CAC6F5R3PIN24BNDAGMT3JXF5C34CJ3URFPHTG5WREXOJMA45ZXZAO3E) |
+| **🔍 Stellar Lab Explorer** | [Open Contract in Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAC6F5R3PIN24BNDAGMT3JXF5C34CJ3URFPHTG5WREXOJMA45ZXZAO3E) |
+| **⚡ Deploy Tx Hash** | [`375f2a72354fa8926e902e1c0fb90fdd2f9a10d0a38609f8709a1244769c5f14`](https://stellar.expert/explorer/testnet/tx/375f2a72354fa8926e902e1c0fb90fdd2f9a10d0a38609f8709a1244769c5f14) |
+| **📝 Contract Call Tx Hash (`create_campaign`)** | [`c985c1d95a0538f1a11e55f0eb4bb1c214cd8dcc2af2974bbc1b919ad4440b8c`](https://stellar.expert/explorer/testnet/tx/c985c1d95a0538f1a11e55f0eb4bb1c214cd8dcc2af2974bbc1b919ad4440b8c) |
+| **🪙 Native SAC Token Address** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
+| **⚙️ Soroban RPC Server** | `https://soroban-testnet.stellar.org` |
+| **🛰️ Horizon Server** | `https://horizon-testnet.stellar.org` |
+
+---
+
+## 📸 Level 3 Submission Screenshots
+
+### 1. Mobile Responsive UI (Claymorphism & Oceanic Blue Gradient)
+<p align="center">
+  <img src="./docs/screenshots/mobile_ui.png" alt="AidPact Mobile Responsive UI" width="340" />
+</p>
+
+---
+
+### 2. Automated CI/CD Pipeline & Deployment (All Checks Passed)
+<p align="center">
+  <img src="./docs/screenshots/cicd_pipeline.png" alt="GitHub Actions CI/CD Pipeline and Vercel Checks Passed" width="680" />
+</p>
+
+---
+
+### 3. Automated Unit Test Output (10/10 Vitest Tests Passing)
+<p align="center">
+  <img src="./docs/screenshots/test_output.png" alt="Vitest Unit Tests Output" width="560" />
+</p>
+
+---
+
+### 4. Verified Contract On-Chain Deployment in Stellar Explorer
+<p align="center">
+  <img src="./docs/screenshots/contract_explorer.png" alt="Stellar Explorer Contract Info" width="680" />
+</p>
 
 ---
 
@@ -33,16 +65,18 @@ This repository fulfills all requirements for **Level 3 (Black Belt — Advanced
 
 | Requirement | Implementation & Proof | Status |
 |---|---|:---:|
-| **1. Advanced Smart Contract Development** | Soroban contract with escrow, milestone accounting, event emissions, organizer roles, and immutable receipt generation | ✅ Complete |
-| **2. Inter-Contract Communication** | Stellar Asset Contract (SAC) token integration for cryptographic escrow and transfer logic | ✅ Complete |
-| **3. Event Streaming & Real-Time Updates** | Real-time Soroban RPC event stream polling with dynamic category filters and state synchronization | ✅ Complete |
-| **4. CI/CD Pipeline Setup** | Automated GitHub Actions (`.github/workflows/ci.yml`) compiling Soroban contract, running Vitest suite, and building production bundle | ✅ Complete |
-| **5. Smart Contract Deployment Workflow** | Reproducible Stellar CLI build and testnet deployment scripts | ✅ Complete |
-| **6. Mobile Responsive UI** | Custom Claymorphism and Oceanic Gradient Blue UI system with 0 clipped text and fluid responsive breakpoints | ✅ Complete |
-| **7. Error Handling & Loading States** | 3-tier error handling (wallet missing, signature rejected, simulation revert) and 4-stage transaction status tracker | ✅ Complete |
-| **8. Automated Test Suite** | 10/10 Vitest tests passing (`npm test`) covering address validation, currency math, stroop conversions, and parameter encoding | ✅ Complete |
-| **9. Production-Ready Architecture** | Modular TypeScript architecture, type safety, persistent local storage, and Vite tree shaking | ✅ Complete |
-| **10. 10+ Meaningful Commits** | Structured, semantic commit history (35+ commits across levels) | ✅ Complete |
+| **1. Public GitHub Repository** | [`https://github.com/xynezakg/Stellar-Xynezak`](https://github.com/xynezakg/Stellar-Xynezak) | ✅ Complete |
+| **2. Live Demo URL** | [`https://aidpact.vercel.app/`](https://aidpact.vercel.app/) | ✅ Complete |
+| **3. Advanced Smart Contract Development** | Soroban contract with escrow, milestone accounting, event emissions, organizer roles, and immutable receipt generation | ✅ Complete |
+| **4. Inter-Contract Communication** | Stellar Asset Contract (SAC) token integration for cryptographic escrow and transfer logic | ✅ Complete |
+| **5. Event Streaming & Real-Time Updates** | Real-time Soroban RPC event stream polling with dynamic category filters and state synchronization | ✅ Complete |
+| **6. CI/CD Pipeline Setup** | Automated GitHub Actions (`.github/workflows/ci.yml`) compiling Soroban contract, running Vitest suite, and building production bundle | ✅ Complete |
+| **7. Smart Contract Deployment Workflow** | Reproducible Stellar CLI build and testnet deployment scripts | ✅ Complete |
+| **8. Mobile Responsive UI** | Custom Claymorphism and Oceanic Gradient Blue UI system with 0 clipped text and fluid responsive breakpoints | ✅ Complete |
+| **9. Error Handling & Loading States** | 3-tier error handling (wallet missing, signature rejected, simulation revert) and 4-stage transaction status tracker | ✅ Complete |
+| **10. Automated Test Suite** | 10/10 Vitest tests passing (`npm test`) covering address validation, currency math, stroop conversions, and parameter encoding | ✅ Complete |
+| **11. Production-Ready Architecture** | Modular TypeScript architecture, type safety, persistent local storage, and Vite tree shaking | ✅ Complete |
+| **12. 10+ Meaningful Commits** | Structured, semantic commit history (45+ commits across levels) | ✅ Complete |
 
 ---
 
@@ -114,7 +148,7 @@ npm test
 ## ⚙️ Automated GitHub Actions CI/CD Pipeline
 
 The `.github/workflows/ci.yml` pipeline triggers on every push and pull request:
-1. **Job 1 (`contract-build`)**: Sets up Rust, installs Stellar CLI, and compiles `aid_pact.wasm`.
+1. **Job 1 (`contract-build`)**: Sets up Rust, installs the Wasm target, and compiles `contracts/aid_pact/`.
 2. **Job 2 (`frontend-build`)**: Sets up Node 20, runs Vitest unit tests, and builds the production bundle with Vite.
 
 ---
