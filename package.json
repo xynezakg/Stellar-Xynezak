@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@albedo-link/intent": "^0.13.0",
     "@stellar/freighter-api": "^3.0.4",
     "@stellar/stellar-sdk": "^13.3.0",
     "clsx": "^2.1.1",

@@ -10,6 +10,9 @@ node_modules
 dist
 dist-ssr
 *.local
+target/
+contracts/**/target/
+*.wasm
 
 # Editor directories and files
 .vscode/*
