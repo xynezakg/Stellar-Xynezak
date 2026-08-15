@@ -7,14 +7,16 @@ import { BalanceCard } from './components/BalanceCard';
 import { CrowdfundingProgress } from './components/CrowdfundingProgress';
 import { ReliefPresets } from './components/ReliefPresets';
 import { DonationForm } from './components/DonationForm';
+import { OrganizerPortal } from './components/OrganizerPortal';
+import { LiveEventFeed } from './components/LiveEventFeed';
 import { ReceiptsExplorer } from './components/ReceiptsExplorer';
 import { TransactionModal } from './components/TransactionModal';
 import { ActivityLog } from './components/ActivityLog';
 import { PresetBeneficiary, ReliefTransaction, TransactionResult } from './types/stellar';
 import { buildPaymentTransaction, submitSignedTransaction } from './services/stellar';
 import { signTxWithSelectedWallet } from './services/wallets';
-import { invokeContractDonate, TxStepStatus } from './services/soroban';
-import { HeartHandshake, ShieldCheck, Zap, Sparkles, Cpu } from 'lucide-react';
+import { invokeContractDonate, invokeContractDistribute, TxStepStatus } from './services/soroban';
+import { HeartHandshake, ShieldCheck, Zap, Sparkles, Cpu, Radio, FileCheck } from 'lucide-react';
 
 const LOCAL_STORAGE_TXS_KEY = 'aidpact_relief_transactions';
 
@@ -39,6 +41,9 @@ export function App() {
     lastSyncTime,
     refreshContract,
   } = useContractSync(0);
+
+  // Active Portal Tab
+  const [activeTab, setActiveTab] = useState<'donate' | 'telemetry' | 'organizer' | 'receipts'>('donate');
 
   const [selectedPreset, setSelectedPreset] = useState<PresetBeneficiary | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,7 +80,7 @@ export function App() {
     localStorage.removeItem(LOCAL_STORAGE_TXS_KEY);
   };
 
-  // Smart Contract Donation Flow (Level 2 Core Invocation)
+  // Smart Contract Donation Flow
   const handleSendContractDonation = async (
     amount: string,
     memo: string,
@@ -93,7 +98,7 @@ export function App() {
 
     try {
       const { hash, ledger } = await invokeContractDonate(
-        0, // Campaign ID 0
+        0,
         wallet.address,
         amount,
         wallet.walletType,
@@ -113,7 +118,6 @@ export function App() {
       setTxResult(res);
       setTxStepStatus('CONFIRMED');
 
-      // Record in activity log
       const newTx: ReliefTransaction = {
         id: hash,
         hash,
@@ -131,7 +135,6 @@ export function App() {
 
       setTransactions((prev) => [newTx, ...prev]);
 
-      // Refresh contract state and wallet balance
       setTimeout(() => {
         refreshContract();
         refreshBalance();
@@ -149,7 +152,74 @@ export function App() {
     }
   };
 
-  // Direct XLM Payment Flow (Level 1 Fallback)
+  // Organizer Relief Disbursement Flow (Invokes distribute() on Soroban)
+  const handleDistributeRelief = async (beneficiaryAddress: string, amount: string) => {
+    if (!wallet.address || !wallet.walletType) {
+      openWalletModal();
+      return;
+    }
+
+    setIsSubmitting(true);
+    setIsModalOpen(true);
+    setLastSentAmount(amount);
+    setLastRecipient(`Evacuee (${beneficiaryAddress.slice(0, 8)}...)`);
+
+    try {
+      const { hash, ledger } = await invokeContractDistribute(
+        0,
+        wallet.address,
+        beneficiaryAddress,
+        amount,
+        wallet.walletType,
+        (status, message) => {
+          setTxStepStatus(status);
+          if (message) setTxStatusMessage(message);
+        }
+      );
+
+      setTxResult({
+        success: true,
+        hash,
+        ledger,
+        isContractCall: true,
+      });
+      setTxStepStatus('CONFIRMED');
+
+      const newTx: ReliefTransaction = {
+        id: hash,
+        hash,
+        from: wallet.address,
+        to: beneficiaryAddress,
+        recipientName: 'Verified Evacuee / Shelter',
+        amount,
+        memo: 'Relief Disbursed',
+        timestamp: Date.now(),
+        status: 'SUCCESS',
+        isContractCall: true,
+        contractMethod: 'distribute',
+        ledger,
+      };
+
+      setTransactions((prev) => [newTx, ...prev]);
+
+      setTimeout(() => {
+        refreshContract();
+        refreshBalance();
+      }, 1500);
+    } catch (err: any) {
+      console.error('Relief disbursement error:', err);
+      setTxStepStatus('FAILED');
+      setTxResult({
+        success: false,
+        error: err.message || 'Disbursement execution failed.',
+        isContractCall: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Direct XLM Payment Flow
   const handleSendDirectPayment = async (
     to: string,
     amount: string,
@@ -228,28 +298,28 @@ export function App() {
       />
 
       <main className="main-content">
-        {/* Hero Banner */}
+        {/* Hero Section */}
         <section className="hero-banner">
           <div className="hero-badge-row">
             <span className="hero-badge">
               <Sparkles size={14} className="text-emerald" />
-              Stellar RiseIn Hackathon — Level 2 (Multi-Wallet & Soroban v22)
+              Stellar RiseIn Hackathon — Level 3 Production dApp
             </span>
           </div>
 
           <h1 className="hero-title">
-            Decentralized Calamity Relief Escrow on <span className="hero-highlight">Soroban Smart Contracts</span>
+            Decentralized Disaster Relief Escrow on <span className="hero-highlight">Soroban Smart Contracts</span>
           </h1>
 
           <p className="hero-lead">
-            Cryptographically locked emergency aid funds, multi-wallet authentication, and verified distribution receipts on <strong>Stellar Testnet</strong>.
+            Cryptographically locked emergency aid funds, multi-wallet authentication, and verified last-mile distribution receipts on <strong>Stellar Testnet</strong>.
           </p>
 
           {/* Quick Metrics Bar */}
           <div className="metrics-grid">
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <Cpu size={20} className="text-primary" />
+                <Cpu size={22} className="text-primary" />
               </div>
               <div className="metric-info">
                 <span className="metric-value">Soroban v22</span>
@@ -259,7 +329,7 @@ export function App() {
 
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <Zap size={20} className="text-amber" />
+                <Zap size={22} className="text-amber" />
               </div>
               <div className="metric-info">
                 <span className="metric-value">5 Wallets</span>
@@ -269,17 +339,17 @@ export function App() {
 
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <ShieldCheck size={20} className="text-emerald" />
+                <ShieldCheck size={22} className="text-emerald" />
               </div>
               <div className="metric-info">
-                <span className="metric-value">$0.00001</span>
-                <span className="metric-label">Gas Cost per Invocation</span>
+                <span className="metric-value">100% On-Chain</span>
+                <span className="metric-label">Verifiable Disaster Receipts</span>
               </div>
             </div>
 
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <HeartHandshake size={20} className="text-rose" />
+                <HeartHandshake size={22} className="text-rose" />
               </div>
               <div className="metric-info">
                 <span className="metric-value">{totalDonated.toFixed(2)} XLM</span>
@@ -298,95 +368,191 @@ export function App() {
           onRefresh={refreshContract}
         />
 
-        {/* Core Grid */}
-        <div className="app-grid">
-          {/* Left Column */}
-          <div className="app-col-left">
-            <BalanceCard
-              wallet={wallet}
-              onRefresh={refreshBalance}
-              onFund={fundAccount}
-              isFunding={isFunding}
-            />
+        {/* Claymorphic Portal Navigation Tabs */}
+        <nav className="portal-tabs-nav" aria-label="Portal Navigation">
+          <button
+            className={`portal-tab-btn ${activeTab === 'donate' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('donate')}
+          >
+            <Sparkles size={16} />
+            <span>Donate & Crowdfund</span>
+          </button>
 
-            <ReliefPresets
-              onSelect={handleSelectPreset}
-              selectedId={selectedPreset ? selectedPreset.id : null}
-            />
+          <button
+            className={`portal-tab-btn ${activeTab === 'telemetry' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('telemetry')}
+          >
+            <Radio size={16} />
+            <span>Live Event Stream</span>
+          </button>
 
-            <ReceiptsExplorer
-              receipts={receipts}
-              totalReceipts={totalReceipts}
-            />
+          <button
+            className={`portal-tab-btn ${activeTab === 'organizer' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('organizer')}
+          >
+            <HeartHandshake size={16} />
+            <span>Organizer Disbursement</span>
+          </button>
+
+          <button
+            className={`portal-tab-btn ${activeTab === 'receipts' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('receipts')}
+          >
+            <FileCheck size={16} />
+            <span>Audit Ledger ({totalReceipts})</span>
+          </button>
+        </nav>
+
+        {/* Tab 1: Donate & Crowdfund Portal */}
+        {activeTab === 'donate' && (
+          <div className="app-grid">
+            <div className="app-col-left">
+              <BalanceCard
+                wallet={wallet}
+                onRefresh={refreshBalance}
+                onFund={fundAccount}
+                isFunding={isFunding}
+              />
+
+              <ReliefPresets
+                onSelect={handleSelectPreset}
+                selectedId={selectedPreset ? selectedPreset.id : null}
+              />
+            </div>
+
+            <div className="app-col-right">
+              <DonationForm
+                wallet={wallet}
+                selectedPreset={selectedPreset}
+                onSendContractDonation={handleSendContractDonation}
+                onSendDirectPayment={handleSendDirectPayment}
+                isSubmitting={isSubmitting}
+              />
+
+              <ActivityLog
+                transactions={transactions}
+                onClearHistory={handleClearHistory}
+              />
+            </div>
           </div>
+        )}
 
-          {/* Right Column */}
-          <div className="app-col-right">
-            <DonationForm
-              wallet={wallet}
-              selectedPreset={selectedPreset}
-              onSendContractDonation={handleSendContractDonation}
-              onSendDirectPayment={handleSendDirectPayment}
-              isSubmitting={isSubmitting}
-            />
-
-            <ActivityLog
-              transactions={transactions}
-              onClearHistory={handleClearHistory}
-            />
+        {/* Tab 2: Live Event Streaming Telemetry */}
+        {activeTab === 'telemetry' && (
+          <div className="app-grid">
+            <div className="app-col-left">
+              <LiveEventFeed />
+            </div>
+            <div className="app-col-right">
+              <BalanceCard
+                wallet={wallet}
+                onRefresh={refreshBalance}
+                onFund={fundAccount}
+                isFunding={isFunding}
+              />
+              <ActivityLog
+                transactions={transactions}
+                onClearHistory={handleClearHistory}
+              />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Tab 3: Organizer Relief Disbursement Portal */}
+        {activeTab === 'organizer' && (
+          <div className="app-grid">
+            <div className="app-col-left">
+              <OrganizerPortal
+                wallet={wallet}
+                campaign={campaign}
+                onDistribute={handleDistributeRelief}
+                isSubmitting={isSubmitting}
+              />
+            </div>
+            <div className="app-col-right">
+              <BalanceCard
+                wallet={wallet}
+                onRefresh={refreshBalance}
+                onFund={fundAccount}
+                isFunding={isFunding}
+              />
+              <ReceiptsExplorer
+                receipts={receipts}
+                totalReceipts={totalReceipts}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Audit & Distribution Receipts Explorer */}
+        {activeTab === 'receipts' && (
+          <div className="app-grid">
+            <div className="app-col-left">
+              <ReceiptsExplorer
+                receipts={receipts}
+                totalReceipts={totalReceipts}
+              />
+            </div>
+            <div className="app-col-right">
+              <ActivityLog
+                transactions={transactions}
+                onClearHistory={handleClearHistory}
+              />
+              <LiveEventFeed />
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Footer */}
+      {/* Production Footer */}
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-brand-col">
             <div className="footer-brand">
-              <HeartHandshake size={20} className="text-rose" />
+              <HeartHandshake size={24} className="text-rose" />
               <span className="footer-brand-name">AidPact</span>
             </div>
             <p className="footer-tagline">
-              Multi-Wallet & Soroban Smart Contract Calamity Relief on Stellar Testnet.
+              Production-grade decentralized disaster relief crowdfunding and verified on-chain disbursement on Stellar Testnet.
             </p>
           </div>
 
           <div className="footer-checklist-col">
-            <h4 className="footer-heading">Level 2 Requirements Verified:</h4>
+            <h4 className="footer-heading">Level 3 Production Standards:</h4>
             <div className="checklist-grid">
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Multi-Wallet Kit (Freighter, xBull, Albedo, Hana, Lobstr)</span>
+                <span>Advanced Soroban Escrow & Receipts Contract</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Soroban Smart Contract Deployed on Testnet</span>
+                <span>Multi-Wallet Kit (Freighter, Albedo, xBull, Hana, Lobstr)</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Contract Called From Frontend (Read & Write)</span>
+                <span>Real-Time Event Stream & RPC Polling</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Real-Time State & Event Sync (Live Progress Bar)</span>
+                <span>Automated GitHub Actions CI/CD Pipeline</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>3+ Error Types Handled with Actionable Guidance</span>
+                <span>Vitest Unit Test Suite (10+ Tests Passing)</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Live Transaction Status Tracking (Simulate → Sign → Submit)</span>
+                <span>Claymorphic Ocean Blue Responsive Design</span>
               </div>
             </div>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>Stellar RiseIn Bootcamp · Built with Soroban SDK & Stellar RPC</span>
+          <span>Stellar RiseIn Bootcamp · Level 3 Submission · Licensed under MIT</span>
         </div>
       </footer>
 
-      {/* Multi-Wallet Selection Modal */}
+      {/* Multi-Wallet Modal */}
       <WalletModal
         isOpen={isWalletModalOpen}
         onSelectWallet={connect}
@@ -395,7 +561,7 @@ export function App() {
         error={wallet.error}
       />
 
-      {/* Transaction Feedback & Status Modal */}
+      {/* Transaction Modal */}
       <TransactionModal
         isOpen={isModalOpen}
         result={txResult}
