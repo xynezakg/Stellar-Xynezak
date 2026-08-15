@@ -4,11 +4,15 @@ import { HeartHandshake, LogOut, Wallet, ShieldCheck, AlertCircle } from 'lucide
 
 interface NavbarProps {
   wallet: WalletState;
-  onConnect: () => void;
+  onOpenWalletModal: () => void;
   onDisconnect: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ wallet, onConnect, onDisconnect }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  wallet,
+  onOpenWalletModal,
+  onDisconnect,
+}) => {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
   };
@@ -25,8 +29,9 @@ export const Navbar: React.FC<NavbarProps> = ({ wallet, onConnect, onDisconnect 
             <div className="brand-title-row">
               <span className="brand-name">AidPact</span>
               <span className="badge-live-emergency">TYPHOON RELIEF</span>
+              <span className="badge-soroban">SOROBAN V22</span>
             </div>
-            <span className="brand-subtitle">Calamity Relief & Verified Distribution</span>
+            <span className="brand-subtitle">Transparent Relief Escrow & Verified Distribution</span>
           </div>
         </div>
 
@@ -39,14 +44,15 @@ export const Navbar: React.FC<NavbarProps> = ({ wallet, onConnect, onDisconnect 
 
           {wallet.isConnected && wallet.address ? (
             <div className="wallet-connected-group">
-              <div className="wallet-badge" title={wallet.address}>
+              <div className="wallet-badge" title={`${wallet.walletName || 'Stellar'}: ${wallet.address}`}>
                 <ShieldCheck size={16} className="text-emerald" />
+                <span className="wallet-provider-tag">{wallet.walletName || 'Wallet'}:</span>
                 <span className="wallet-address-text">{formatAddress(wallet.address)}</span>
               </div>
               <button
                 className="btn-disconnect"
                 onClick={onDisconnect}
-                title="Disconnect Freighter Wallet"
+                title="Disconnect Wallet"
               >
                 <LogOut size={16} />
                 <span className="btn-text-desktop">Disconnect</span>
@@ -55,11 +61,11 @@ export const Navbar: React.FC<NavbarProps> = ({ wallet, onConnect, onDisconnect 
           ) : (
             <button
               className="btn-connect"
-              onClick={onConnect}
+              onClick={onOpenWalletModal}
               disabled={wallet.isConnecting}
             >
               <Wallet size={18} />
-              <span>{wallet.isConnecting ? 'Connecting...' : 'Connect Freighter'}</span>
+              <span>{wallet.isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
             </button>
           )}
         </div>
