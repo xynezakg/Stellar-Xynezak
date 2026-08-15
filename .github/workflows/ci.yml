@@ -1,0 +1,80 @@
+name: AidPact CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job 1: Smart Contract Compilation & Validation
+  contract-build:
+    name: Soroban Smart Contract Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none, wasm32-unknown-unknown
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            contracts/aid_pact/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install Stellar CLI
+        run: |
+          cargo install --locked stellar-cli --features opt
+
+      - name: Build Soroban Contract WASM
+        run: |
+          stellar contract build --manifest-path contracts/aid_pact/Cargo.toml
+
+      - name: Verify WASM Binary Output
+        run: |
+          ls -la contracts/aid_pact/target/wasm32v1-none/release/aid_pact.wasm || ls -la contracts/aid_pact/target/wasm32-unknown-unknown/release/*.wasm
+
+  # Job 2: Frontend Unit Tests & Production Build
+  frontend-build:
+    name: Frontend Tests & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Run Vitest Unit Tests
+        run: npm test
+
+      - name: Build Vite Production Bundle
+        run: npm run build
+
+      - name: Upload Production Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aidpact-production-build
+          path: dist/
+          retention-days: 7
