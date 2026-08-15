@@ -1,5 +1,10 @@
+import { WalletType } from '../services/wallets';
+import { TxStepStatus } from '../services/soroban';
+
 export interface WalletState {
   address: string | null;
+  walletType: WalletType | null;
+  walletName: string | null;
   isConnected: boolean;
   isConnecting: boolean;
   balance: string | null;
@@ -29,6 +34,8 @@ export interface ReliefTransaction {
   memo?: string;
   timestamp: number;
   status: 'SUCCESS' | 'FAILED';
+  isContractCall?: boolean;
+  contractMethod?: 'donate' | 'distribute' | 'create_campaign';
   ledger?: number;
 }
 
@@ -37,4 +44,6 @@ export interface TransactionResult {
   hash?: string;
   ledger?: number;
   error?: string;
+  stepStatus?: TxStepStatus;
+  isContractCall?: boolean;
 }
