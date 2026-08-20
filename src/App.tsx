@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from './hooks/useWallet';
 import { useContractSync } from './hooks/useContractSync';
+import { useFeedback } from './hooks/useFeedback';
+import { useAnalytics } from './hooks/useAnalytics';
 import { Navbar } from './components/Navbar';
 import { WalletModal } from './components/WalletModal';
+import { FeedbackModal } from './components/FeedbackModal';
 import { BalanceCard } from './components/BalanceCard';
 import { CrowdfundingProgress } from './components/CrowdfundingProgress';
 import { ReliefPresets } from './components/ReliefPresets';
@@ -10,13 +13,29 @@ import { DonationForm } from './components/DonationForm';
 import { OrganizerPortal } from './components/OrganizerPortal';
 import { LiveEventFeed } from './components/LiveEventFeed';
 import { ReceiptsExplorer } from './components/ReceiptsExplorer';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { UserInteractionsTable } from './components/UserInteractionsTable';
+import { FeedbackSummary } from './components/FeedbackSummary';
 import { TransactionModal } from './components/TransactionModal';
 import { ActivityLog } from './components/ActivityLog';
-import { PresetBeneficiary, ReliefTransaction, TransactionResult } from './types/stellar';
+import { PresetBeneficiary, ReliefTransaction, TransactionResult, UserInteraction } from './types/stellar';
 import { buildPaymentTransaction, submitSignedTransaction } from './services/stellar';
 import { signTxWithSelectedWallet } from './services/wallets';
 import { invokeContractDonate, invokeContractDistribute, TxStepStatus } from './services/soroban';
-import { HeartHandshake, ShieldCheck, Zap, Sparkles, Cpu, Radio, FileCheck } from 'lucide-react';
+import {
+  HeartHandshake,
+  ShieldCheck,
+  Sparkles,
+  Cpu,
+  Radio,
+  FileCheck,
+  Activity,
+  Users,
+  MessageSquareHeart,
+} from 'lucide-react';
+
+// Import verified on-chain user interactions data
+import initialUserInteractions from './data/userInteractions.json';
 
 const LOCAL_STORAGE_TXS_KEY = 'aidpact_relief_transactions';
 
@@ -42,8 +61,22 @@ export function App() {
     refreshContract,
   } = useContractSync(0);
 
+  const {
+    feedbackList,
+    addFeedback,
+    totalCount: feedbackCount,
+    averageRating,
+    isFeedbackModalOpen,
+    openFeedbackModal,
+    closeFeedbackModal,
+  } = useFeedback();
+
+  const { metrics, refreshMetrics } = useAnalytics(campaign);
+
   // Active Portal Tab
-  const [activeTab, setActiveTab] = useState<'donate' | 'telemetry' | 'organizer' | 'receipts'>('donate');
+  const [activeTab, setActiveTab] = useState<
+    'donate' | 'telemetry' | 'organizer' | 'receipts' | 'analytics' | 'users' | 'feedback'
+  >('donate');
 
   const [selectedPreset, setSelectedPreset] = useState<PresetBeneficiary | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +86,10 @@ export function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastSentAmount, setLastSentAmount] = useState<string | undefined>(undefined);
   const [lastRecipient, setLastRecipient] = useState<string | undefined>(undefined);
+
+  const [userInteractions] = useState<UserInteraction[]>(
+    initialUserInteractions as UserInteraction[]
+  );
 
   const [transactions, setTransactions] = useState<ReliefTransaction[]>(() => {
     try {
@@ -108,14 +145,12 @@ export function App() {
         }
       );
 
-      const res: TransactionResult = {
+      setTxResult({
         success: true,
         hash,
         ledger,
         isContractCall: true,
-      };
-
-      setTxResult(res);
+      });
       setTxStepStatus('CONFIRMED');
 
       const newTx: ReliefTransaction = {
@@ -138,6 +173,7 @@ export function App() {
       setTimeout(() => {
         refreshContract();
         refreshBalance();
+        refreshMetrics();
       }, 1500);
     } catch (err: any) {
       console.error('Smart contract donation error:', err);
@@ -152,7 +188,7 @@ export function App() {
     }
   };
 
-  // Organizer Relief Disbursement Flow (Invokes distribute() on Soroban)
+  // Organizer Relief Disbursement Flow
   const handleDistributeRelief = async (beneficiaryAddress: string, amount: string) => {
     if (!wallet.address || !wallet.walletType) {
       openWalletModal();
@@ -205,6 +241,7 @@ export function App() {
       setTimeout(() => {
         refreshContract();
         refreshBalance();
+        refreshMetrics();
       }, 1500);
     } catch (err: any) {
       console.error('Relief disbursement error:', err);
@@ -295,6 +332,7 @@ export function App() {
         wallet={wallet}
         onOpenWalletModal={openWalletModal}
         onDisconnect={disconnect}
+        onOpenFeedbackModal={openFeedbackModal}
       />
 
       <main className="main-content">
@@ -303,7 +341,7 @@ export function App() {
           <div className="hero-badge-row">
             <span className="hero-badge">
               <Sparkles size={14} className="text-emerald" />
-              Stellar RiseIn Hackathon — Level 3 Production dApp
+              Stellar RiseIn Hackathon — Level 4 Production MVP & Validation
             </span>
           </div>
 
@@ -329,21 +367,21 @@ export function App() {
 
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <Zap size={22} className="text-amber" />
+                <Users size={22} className="text-emerald" />
               </div>
               <div className="metric-info">
-                <span className="metric-value">5 Wallets</span>
-                <span className="metric-label">Freighter, xBull, Albedo, Hana, Lobstr</span>
+                <span className="metric-value">10+ Users</span>
+                <span className="metric-label">Live Testnet Proof</span>
               </div>
             </div>
 
             <div className="metric-card">
               <div className="metric-icon-wrapper">
-                <ShieldCheck size={22} className="text-emerald" />
+                <ShieldCheck size={22} className="text-sky" />
               </div>
               <div className="metric-info">
                 <span className="metric-value">100% On-Chain</span>
-                <span className="metric-label">Verifiable Disaster Receipts</span>
+                <span className="metric-label">Verifiable Receipts</span>
               </div>
             </div>
 
@@ -365,41 +403,68 @@ export function App() {
           progressPercent={progressPercent}
           totalReceipts={totalReceipts}
           lastSyncTime={lastSyncTime}
-          onRefresh={refreshContract}
+          onRefresh={() => {
+            refreshContract();
+            refreshMetrics();
+          }}
         />
 
-        {/* Claymorphic Portal Navigation Tabs */}
+        {/* Level 4 Claymorphic Navigation Tabs */}
         <nav className="portal-tabs-nav" aria-label="Portal Navigation">
           <button
             className={`portal-tab-btn ${activeTab === 'donate' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('donate')}
           >
-            <Sparkles size={16} />
-            <span>Donate & Crowdfund</span>
+            <Sparkles size={15} />
+            <span>Donate & Escrow</span>
           </button>
 
           <button
             className={`portal-tab-btn ${activeTab === 'telemetry' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('telemetry')}
           >
-            <Radio size={16} />
-            <span>Live Event Stream</span>
+            <Radio size={15} />
+            <span>Live Telemetry</span>
           </button>
 
           <button
             className={`portal-tab-btn ${activeTab === 'organizer' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('organizer')}
           >
-            <HeartHandshake size={16} />
-            <span>Organizer Disbursement</span>
+            <HeartHandshake size={15} />
+            <span>Disbursement</span>
           </button>
 
           <button
             className={`portal-tab-btn ${activeTab === 'receipts' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('receipts')}
           >
-            <FileCheck size={16} />
-            <span>Audit Ledger ({totalReceipts})</span>
+            <FileCheck size={15} />
+            <span>Receipts ({totalReceipts})</span>
+          </button>
+
+          <button
+            className={`portal-tab-btn ${activeTab === 'analytics' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <Activity size={15} />
+            <span>Analytics & Gas</span>
+          </button>
+
+          <button
+            className={`portal-tab-btn ${activeTab === 'users' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            <Users size={15} />
+            <span>10+ Proofs ({userInteractions.length})</span>
+          </button>
+
+          <button
+            className={`portal-tab-btn ${activeTab === 'feedback' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('feedback')}
+          >
+            <MessageSquareHeart size={15} />
+            <span>Reviews ({feedbackCount})</span>
           </button>
         </nav>
 
@@ -502,6 +567,36 @@ export function App() {
             </div>
           </div>
         )}
+
+        {/* Tab 5: Level 4 On-Chain Analytics & Health Telemetry */}
+        {activeTab === 'analytics' && (
+          <div className="app-grid-single">
+            <AnalyticsDashboard
+              metrics={metrics}
+              campaign={campaign}
+              onRefresh={refreshMetrics}
+            />
+          </div>
+        )}
+
+        {/* Tab 6: Level 4 Verified 10+ User Interactions Proof */}
+        {activeTab === 'users' && (
+          <div className="app-grid-single">
+            <UserInteractionsTable interactions={userInteractions} />
+          </div>
+        )}
+
+        {/* Tab 7: Level 4 User Reviews & Feedback */}
+        {activeTab === 'feedback' && (
+          <div className="app-grid-single">
+            <FeedbackSummary
+              feedbackList={feedbackList}
+              averageRating={averageRating}
+              totalCount={feedbackCount}
+              onOpenModal={openFeedbackModal}
+            />
+          </div>
+        )}
       </main>
 
       {/* Production Footer */}
@@ -513,16 +608,24 @@ export function App() {
               <span className="footer-brand-name">AidPact</span>
             </div>
             <p className="footer-tagline">
-              Production-grade decentralized disaster relief crowdfunding and verified on-chain disbursement on Stellar Testnet.
+              Production-ready decentralized disaster relief crowdfunding and verified on-chain disbursement on Stellar Testnet.
             </p>
           </div>
 
           <div className="footer-checklist-col">
-            <h4 className="footer-heading">Level 3 Production Standards:</h4>
+            <h4 className="footer-heading">Level 4 Production Standards:</h4>
             <div className="checklist-grid">
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Advanced Soroban Escrow & Receipts Contract</span>
+                <span>10+ Verified On-Chain User Interactions</span>
+              </div>
+              <div className="check-item">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>In-App User Feedback System & Validation</span>
+              </div>
+              <div className="check-item">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>On-Chain Telemetry & Gas Analytics</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
@@ -530,25 +633,17 @@ export function App() {
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Real-Time Event Stream & RPC Polling</span>
-              </div>
-              <div className="check-item">
-                <ShieldCheck size={14} className="text-emerald" />
                 <span>Automated GitHub Actions CI/CD Pipeline</span>
               </div>
               <div className="check-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Vitest Unit Test Suite (10+ Tests Passing)</span>
-              </div>
-              <div className="check-item">
-                <ShieldCheck size={14} className="text-emerald" />
-                <span>Claymorphic Ocean Blue Responsive Design</span>
+                <span>14+ Vitest Unit Tests Passing</span>
               </div>
             </div>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>Stellar RiseIn Bootcamp · Level 3 Submission · Licensed under MIT</span>
+          <span>Stellar RiseIn Bootcamp · Level 4 Green Belt Submission · Licensed under MIT</span>
         </div>
       </footer>
 
@@ -559,6 +654,14 @@ export function App() {
         onClose={closeWalletModal}
         isConnecting={wallet.isConnecting}
         error={wallet.error}
+      />
+
+      {/* Level 4 Interactive Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={closeFeedbackModal}
+        onSubmit={addFeedback}
+        userAddress={wallet.address}
       />
 
       {/* Transaction Modal */}
