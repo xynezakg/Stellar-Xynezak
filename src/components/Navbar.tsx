@@ -1,5 +1,7 @@
 import React from 'react';
 import { WalletState } from '../types/stellar';
+import { Language } from '../utils/i18n';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeartHandshake, LogOut, Wallet, ShieldCheck, AlertCircle, MessageSquareHeart } from 'lucide-react';
 
 interface NavbarProps {
@@ -7,6 +9,8 @@ interface NavbarProps {
   onOpenWalletModal: () => void;
   onDisconnect: () => void;
   onOpenFeedbackModal: () => void;
+  currentLang: Language;
+  onLanguageChange: (lang: Language) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -14,6 +18,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenWalletModal,
   onDisconnect,
   onOpenFeedbackModal,
+  currentLang,
+  onLanguageChange,
 }) => {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
@@ -37,8 +43,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Network, Feedback & Wallet Controls */}
+        {/* Language, Feedback & Wallet Controls */}
         <div className="navbar-actions">
+          {/* Language Switcher */}
+          <LanguageSwitcher currentLang={currentLang} onLanguageChange={onLanguageChange} />
+
           <button
             className="btn-feedback-nav"
             onClick={onOpenFeedbackModal}
