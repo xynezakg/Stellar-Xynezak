@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     nodePolyfills({
+      include: ['buffer', 'crypto', 'stream', 'util', 'process'],
       globals: {
         Buffer: true,
         global: true,
@@ -14,7 +15,17 @@ export default defineConfig({
       },
     }),
   ],
-  define: {
-    'process.env': {},
+  build: {
+    target: 'esnext',
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-stellar': ['@stellar/stellar-sdk', '@stellar/freighter-api', '@albedo-link/intent'],
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['lucide-react', 'clsx'],
+        },
+      },
+    },
   },
 });
