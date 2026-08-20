@@ -1,17 +1,19 @@
 import React from 'react';
 import { WalletState } from '../types/stellar';
-import { HeartHandshake, LogOut, Wallet, ShieldCheck, AlertCircle } from 'lucide-react';
+import { HeartHandshake, LogOut, Wallet, ShieldCheck, AlertCircle, MessageSquareHeart } from 'lucide-react';
 
 interface NavbarProps {
   wallet: WalletState;
   onOpenWalletModal: () => void;
   onDisconnect: () => void;
+  onOpenFeedbackModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   wallet,
   onOpenWalletModal,
   onDisconnect,
+  onOpenFeedbackModal,
 }) => {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
@@ -35,8 +37,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Network & Wallet Controls */}
+        {/* Network, Feedback & Wallet Controls */}
         <div className="navbar-actions">
+          <button
+            className="btn-feedback-nav"
+            onClick={onOpenFeedbackModal}
+            title="Leave User Feedback & Validation"
+          >
+            <MessageSquareHeart size={15} className="text-rose" />
+            <span className="btn-text-desktop">Feedback</span>
+          </button>
+
           <div className="network-pill">
             <span className="network-dot"></span>
             <span className="network-text">Stellar Testnet</span>
