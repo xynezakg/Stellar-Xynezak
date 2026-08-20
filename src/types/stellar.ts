@@ -47,3 +47,54 @@ export interface TransactionResult {
   stepStatus?: TxStepStatus;
   isContractCall?: boolean;
 }
+
+// --------------------------------------------------------------------------
+// Level 4 Types: User Feedback, Onboarding & Analytics Telemetry
+// --------------------------------------------------------------------------
+
+export type FeedbackCategory =
+  | 'UI_UX'
+  | 'TRANSACTION_SPEED'
+  | 'WALLET_EXPERIENCE'
+  | 'TRANSPARENCY'
+  | 'FEATURE_REQUEST'
+  | 'GENERAL';
+
+export interface UserFeedback {
+  id: string;
+  userName: string;
+  userRole: string;
+  rating: number; // 1 to 5 stars
+  category: FeedbackCategory;
+  comment: string;
+  featureRequest?: string;
+  walletAddress?: string;
+  timestamp: number;
+  sentiment: 'POSITIVE' | 'NEUTRAL' | 'CONSTRUCTIVE';
+}
+
+export interface UserInteraction {
+  id: string;
+  userName: string;
+  userRole: string;
+  location: string;
+  publicKey: string;
+  amountXlm: string;
+  comment: string;
+  txHash: string;
+  ledger: number;
+  timestamp: number;
+  explorerUrl: string;
+}
+
+export interface AnalyticsMetrics {
+  totalVolumeXlm: number;
+  totalTransactionsCount: number;
+  averageDonationXlm: number;
+  uniqueDonorsCount: number;
+  totalDistributedXlm: number;
+  escrowRetentionRate: number;
+  averageGasStroops: number;
+  rpcLatencyMs: number;
+  systemHealth: 'OPTIMAL' | 'DEGRADED' | 'MAINTENANCE';
+}
