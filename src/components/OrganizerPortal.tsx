@@ -1,22 +1,14 @@
 import React, { useState } from 'react';
-import { OnChainCampaign } from '../services/soroban';
 import { WalletState } from '../types/stellar';
-import { isValidStellarAddress } from '../utils/helpers';
-import { PRESET_BENEFICIARIES } from './ReliefPresets';
-import {
-  HeartHandshake,
-  ShieldCheck,
-  Send,
-  AlertCircle,
-  Sparkles,
-  Info,
-  CheckCircle2,
-} from 'lucide-react';
+import { OnChainCampaign } from '../services/soroban';
+import { HeartHandshake, Send, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
+import { formatAddress } from '../utils/helpers';
+import { BatchDisbursementCalc } from './BatchDisbursementCalc';
 
 interface OrganizerPortalProps {
   wallet: WalletState;
   campaign: OnChainCampaign | null;
-  onDistribute: (beneficiary: string, amount: string) => Promise<void>;
+  onDistribute: (beneficiaryAddress: string, amount: string) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -26,222 +18,155 @@ export const OrganizerPortal: React.FC<OrganizerPortalProps> = ({
   onDistribute,
   isSubmitting,
 }) => {
-  const [beneficiary, setBeneficiary] = useState('');
+  const [beneficiaryAddress, setBeneficiaryAddress] = useState('');
   const [amount, setAmount] = useState('');
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [disbursementNote, setDisbursementNote] = useState('');
 
-  const availableEscrow = campaign
-    ? (parseFloat(campaign.totalDonatedXlm) - parseFloat(campaign.totalDistributedXlm)).toFixed(2)
-    : '0.00';
+  const isOrganizer =
+    wallet.isConnected &&
+    wallet.address &&
+    campaign &&
+    wallet.address.toUpperCase() === campaign.organizer.toUpperCase();
 
-  const handleSelectPresetBeneficiary = (presetId: string, address: string) => {
-    setSelectedPresetId(presetId);
-    setBeneficiary(address);
-    setValidationError(null);
-  };
+  const availableFunds = campaign
+    ? parseFloat(campaign.totalDonatedXlm) - parseFloat(campaign.totalDistributedXlm)
+    : 0;
 
-  const handleSubmitDisbursement = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError(null);
-
-    const trimmedBen = beneficiary.trim();
-    if (!trimmedBen || !isValidStellarAddress(trimmedBen)) {
-      setValidationError('Please enter a valid 56-character Stellar public key starting with G.');
-      return;
-    }
-
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setValidationError('Please enter a disbursement amount greater than 0 XLM.');
-      return;
-    }
-
-    if (numAmount > parseFloat(availableEscrow)) {
-      setValidationError(
-        `Disbursement amount (${numAmount} XLM) exceeds currently available escrow (${availableEscrow} XLM).`
-      );
-      return;
-    }
-
-    await onDistribute(trimmedBen, amount.trim());
+    if (!beneficiaryAddress || !amount || parseFloat(amount) <= 0) return;
+    await onDistribute(beneficiaryAddress.trim(), amount.trim());
+    setBeneficiaryAddress('');
     setAmount('');
+    setDisbursementNote('');
   };
-
-  const isFormDisabled = !wallet.isConnected || isSubmitting;
 
   return (
-    <div className="card organizer-portal-card">
-      <div className="section-title-row">
-        <div className="section-title-wrapper">
-          <HeartHandshake size={20} className="text-emerald" />
-          <h3 className="section-heading">Organizer Relief Disbursement Portal</h3>
-        </div>
-        <span className="badge-organizer-role">
-          <ShieldCheck size={12} />
-          SOROBAN RELIEF DISPATCHER
-        </span>
-      </div>
+    <div className="organizer-portal-container">
+      {/* Batch Relief Allocation Calculator (Feature 3) */}
+      <BatchDisbursementCalc availableFundsXlm={availableFunds} />
 
-      <p className="section-subtext">
-        Release escrowed calamity donations directly to verified evacuation centers, medical teams, and family beneficiaries on the ground. Every payout automatically mints a permanent, timestamped receipt on Soroban.
-      </p>
-
-      {/* Escrow Status Summary */}
-      <div className="organizer-escrow-summary">
-        <div className="escrow-stat-col">
-          <span className="escrow-label">AVAILABLE ESCROW FOR DISBURSEMENT</span>
-          <span className="escrow-value text-emerald mono-text">{availableEscrow} XLM</span>
+      <div className="card organizer-card mt-6">
+        <div className="section-title-row">
+          <div className="section-title-wrapper">
+            <HeartHandshake size={22} className="text-primary" />
+            <h3 className="section-heading">Execute Verified Relief Disbursement</h3>
+          </div>
+          <span className="badge-soroban">
+            <Sparkles size={12} /> Direct Smart Contract Call
+          </span>
         </div>
-        <div className="escrow-stat-col">
-          <span className="escrow-label">TOTAL BENEFICIARIES FUNDED</span>
-          <span className="escrow-value mono-text">{campaign ? campaign.donorCount : 0} Evacuees</span>
-        </div>
-      </div>
 
-      {/* Quick Select Preset Shelters */}
-      <div className="preset-quick-select">
-        <span className="quick-select-label">Quick Select Verified Disaster Response Center:</span>
-        <div className="quick-select-chips">
-          {PRESET_BENEFICIARIES.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`chip-quick-ben ${selectedPresetId === p.id ? 'chip-ben-selected' : ''}`}
-              onClick={() => handleSelectPresetBeneficiary(p.id, p.address)}
-              disabled={isFormDisabled}
-            >
-              <span>{p.avatarEmoji}</span>
-              <span>{p.name.split('—')[0].trim()}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+        <p className="section-subtext">
+          Authorized campaign organizers invoke <code>distribute()</code> on the Soroban smart contract. Funds transfer immediately from escrow to the relief beneficiary and mint an immutable receipt.
+        </p>
 
-      <form onSubmit={handleSubmitDisbursement} className="disbursement-form">
-        <div className="form-group">
-          <label htmlFor="beneficiary-address" className="form-label">
-            Evacuee / Beneficiary Stellar Public Key
-          </label>
-          <div className="input-wrapper">
+        {/* Campaign Financial Summary */}
+        <div className="organizer-financial-summary">
+          <div className="fin-stat-card">
+            <span className="fin-label">TOTAL ESCROWED</span>
+            <span className="fin-value text-emerald mono-text">
+              {campaign ? parseFloat(campaign.totalDonatedXlm).toFixed(2) : '0.00'} XLM
+            </span>
+          </div>
+
+          <div className="fin-stat-card">
+            <span className="fin-label">TOTAL DISBURSED</span>
+            <span className="fin-value text-primary mono-text">
+              {campaign ? parseFloat(campaign.totalDistributedXlm).toFixed(2) : '0.00'} XLM
+            </span>
+          </div>
+
+          <div className="fin-stat-card">
+            <span className="fin-label">AVAILABLE FOR DISBURSEMENT</span>
+            <span className="fin-value text-amber mono-text">
+              {availableFunds.toFixed(2)} XLM
+            </span>
+          </div>
+        </div>
+
+        {/* Organizer Verification Alert */}
+        {wallet.isConnected && (
+          <div className={`organizer-auth-banner ${isOrganizer ? 'auth-success' : 'auth-notice'}`}>
+            {isOrganizer ? (
+              <>
+                <CheckCircle2 size={18} className="text-emerald" />
+                <span>
+                  <strong>Authorized Organizer Verified:</strong> You are the designated organizer for Campaign #{campaign ? campaign.id : 0}.
+                </span>
+              </>
+            ) : (
+              <>
+                <UserCheck size={18} className="text-primary" />
+                <span>
+                  Connected as <code>{wallet.address ? formatAddress(wallet.address, 4, 4) : ''}</code>. You can trigger testnet disbursements or review allocations.
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Disbursement Form */}
+        <form onSubmit={handleSubmit} className="donation-form mt-4">
+          <div className="form-group">
+            <label htmlFor="beneficiary-address" className="form-label">
+              Beneficiary Stellar Address / Shelter Public Key <span className="text-rose">*</span>
+            </label>
             <input
               id="beneficiary-address"
               type="text"
               className="form-input mono-text"
-              placeholder="e.g. GAPK7I64EIS4OQS5CTSEJTEGGPEOG2GQJEYQAMVUIT6WD4IGYQNLQSFH"
-              value={beneficiary}
-              onChange={(e) => {
-                setBeneficiary(e.target.value);
-                setSelectedPresetId(null);
-                setValidationError(null);
-              }}
-              disabled={isFormDisabled}
+              placeholder="e.g. G..."
+              value={beneficiaryAddress}
+              onChange={(e) => setBeneficiaryAddress(e.target.value)}
               required
             />
           </div>
-        </div>
 
-        <div className="form-group">
-          <div className="form-label-row">
+          <div className="form-group">
             <label htmlFor="disburse-amount" className="form-label">
-              Disbursement Amount (XLM)
+              Disbursement Amount (XLM) <span className="text-rose">*</span>
             </label>
-            <span className="form-helper-text">
-              Available Escrow: <strong>{availableEscrow} XLM</strong>
+            <input
+              id="disburse-amount"
+              type="number"
+              step="any"
+              min="0.1"
+              max={availableFunds > 0 ? availableFunds : undefined}
+              className="form-input mono-text"
+              placeholder="e.g. 25"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="disburse-note" className="form-label">
+              Relief Purpose / Allocation Note
+            </label>
+            <input
+              id="disburse-note"
+              type="text"
+              className="form-input"
+              placeholder="e.g. 50 Water Filtration Kits for Shelter Block B"
+              value={disbursementNote}
+              onChange={(e) => setDisbursementNote(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn-primary btn-disburse"
+            disabled={!wallet.isConnected || isSubmitting || !beneficiaryAddress || !amount}
+          >
+            <Send size={18} />
+            <span>
+              {isSubmitting ? 'Distributing on Soroban...' : 'Disburse Relief & Mint Receipt'}
             </span>
-          </div>
-
-          <div className="amount-input-row">
-            <div className="input-wrapper amount-wrapper">
-              <input
-                id="disburse-amount"
-                type="number"
-                step="any"
-                min="0.01"
-                className="form-input"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setValidationError(null);
-                }}
-                disabled={isFormDisabled}
-                required
-              />
-              <span className="input-suffix">XLM</span>
-            </div>
-
-            <div className="amount-chips-group">
-              {['10', '25', '50', '100'].map((val) => (
-                <button
-                  key={val}
-                  type="button"
-                  className={`chip-btn ${amount === val ? 'chip-active' : ''}`}
-                  onClick={() => {
-                    setAmount(val);
-                    setValidationError(null);
-                  }}
-                  disabled={isFormDisabled}
-                >
-                  {val} XLM
-                </button>
-              ))}
-              <button
-                type="button"
-                className="chip-btn chip-max"
-                onClick={() => setAmount(availableEscrow)}
-                disabled={isFormDisabled || parseFloat(availableEscrow) <= 0}
-              >
-                All Available
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="tx-estimate-box">
-          <div className="estimate-row">
-            <span className="estimate-label">
-              <Info size={14} /> Smart Contract Execution
-            </span>
-            <span className="estimate-value text-emerald">
-              <code>distribute(campaign_id: 0, recipient, amount)</code>
-            </span>
-          </div>
-          <div className="estimate-row">
-            <span className="estimate-label">Receipt Generation</span>
-            <span className="estimate-value text-primary">
-              <CheckCircle2 size={13} className="inline text-emerald" /> Immutable Soroban Storage Record
-            </span>
-          </div>
-        </div>
-
-        {validationError && (
-          <div className="form-error-alert">
-            <AlertCircle size={16} />
-            <span>{validationError}</span>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="btn-primary btn-disburse"
-          disabled={isFormDisabled || parseFloat(availableEscrow) <= 0}
-        >
-          {isSubmitting ? (
-            <>
-              <div className="btn-spinner"></div>
-              <span>Executing On-Chain Disbursement...</span>
-            </>
-          ) : (
-            <>
-              <Send size={18} />
-              <span>
-                <Sparkles size={16} /> Disburse {amount ? `${amount} XLM` : 'Aid'} to Beneficiary
-              </span>
-            </>
-          )}
-        </button>
-      </form>
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
